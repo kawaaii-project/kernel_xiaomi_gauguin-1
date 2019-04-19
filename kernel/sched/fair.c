@@ -7231,6 +7231,7 @@ static void find_best_target(struct sched_domain *sd, cpumask_t *cpus,
 	int isolated_candidate = -1;
 	unsigned int target_nr_rtg_high_prio = UINT_MAX;
 	bool rtg_high_prio_task = task_rtg_high_prio(p);
+	int mid_cap_orig_cpu = cpu_rq(smp_processor_id())->rd->mid_cap_orig_cpu;
 	struct task_struct *curr_tsk;
 	bool prioritized_task = prefer_high_cap && p->prio <= DEFAULT_PRIO;
 
@@ -7404,11 +7405,17 @@ static void find_best_target(struct sched_domain *sd, cpumask_t *cpus,
 				/*
 				 * Case A.1: IDLE CPU
 				 * Return the best IDLE CPU we find:
-				 * - for prefer_high_cap tasks: the CPU with the highest
-				 * performance (i.e. biggest capacity_orig)
+				 * - for prefer_high_cap tasks: if the task fits
+				 * in mid cluster, prefer the first mid cluster
+				 * cpu due to cpuset design, then other mid
+				 * cluster cpus. Otherwise, choose max cluster
+				 * cpu.
 				 * - for !prefer_high_cap tasks: the most energy
 				 * efficient CPU (i.e. smallest capacity_orig)
 				 */
+				if (prefer_high_cap && mid_cap_orig_cpu != -1 &&
+					best_idle_cpu == mid_cap_orig_cpu)
+					break;
 				if (idle_cpu(i)) {
 					if (prefer_high_cap &&
 					    capacity_orig < target_capacity)
@@ -7486,11 +7493,11 @@ static void find_best_target(struct sched_domain *sd, cpumask_t *cpus,
 
 				/*
 				 * If utilization is the same between CPUs,
-				 * break the ties with WALT's cumulative
-				 * demand
+				 * break the ties with cumulative demand,
+				 * also prefer lower order cpu.
 				 */
 				if (new_util == best_active_util &&
-				    new_util_cuml > best_active_cuml_util)
+					new_util_cuml >= best_active_cuml_util)
 					continue;
 				min_wake_util = wake_util;
 				best_active_util = new_util;
@@ -7647,7 +7654,13 @@ static void find_best_target(struct sched_domain *sd, cpumask_t *cpus,
 		     (target_cpu != -1 ||
 		      (fbt_env->strict_max && most_spare_cap_cpu != -1)))) {
 			if (prioritized_task) {
-				if (!next_group_higher_cap)
+				/*
+				 * For prefer_high_cap task, stop searching when
+				 * an idle cpu is found in mid cluster.
+				 */
+				if ((mid_cap_orig_cpu != -1 &&
+					best_idle_cpu >= mid_cap_orig_cpu) ||
+					!next_group_higher_cap)
 					break;
 			} else {
 				if (next_group_higher_cap)
