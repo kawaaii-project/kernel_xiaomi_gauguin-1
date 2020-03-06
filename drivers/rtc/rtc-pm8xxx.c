@@ -281,12 +281,6 @@ static int pm8xxx_rtc_read_alarm(struct device *dev, struct rtc_wkalrm *alarm)
 
 	rtc_time64_to_tm(secs, &alarm->time);
 
-	rc = rtc_valid_tm(&alarm->time);
-	if (rc < 0) {
-		dev_err(dev, "Invalid alarm time read from RTC\n");
-		return rc;
-	}
-
 	rc = regmap_bulk_read(rtc_dd->regmap, regs->alarm_ctrl, value, 1);
 	if (rc) {
 		dev_err(dev, "Read from ALARM CTRL failed\n");
