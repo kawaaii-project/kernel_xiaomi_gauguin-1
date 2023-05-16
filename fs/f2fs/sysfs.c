@@ -95,28 +95,28 @@ static unsigned char *__struct_ptr(struct f2fs_sb_info *sbi, int struct_type)
 static ssize_t dirty_segments_show(struct f2fs_attr *a,
 		struct f2fs_sb_info *sbi, char *buf)
 {
-	return sprintf(buf, "%llu\n",
+	return sysfs_emit(buf, "%llu\n",
 			(unsigned long long)(dirty_segments(sbi)));
 }
 
 static ssize_t free_segments_show(struct f2fs_attr *a,
 		struct f2fs_sb_info *sbi, char *buf)
 {
-	return sprintf(buf, "%llu\n",
+	return sysfs_emit(buf, "%llu\n",
 			(unsigned long long)(free_segments(sbi)));
 }
 
 static ssize_t ovp_segments_show(struct f2fs_attr *a,
 		struct f2fs_sb_info *sbi, char *buf)
 {
-	return sprintf(buf, "%llu\n",
+	return sysfs_emit(buf, "%llu\n",
 			(unsigned long long)(overprovision_segments(sbi)));
 }
 
 static ssize_t lifetime_write_kbytes_show(struct f2fs_attr *a,
 		struct f2fs_sb_info *sbi, char *buf)
 {
-	return sprintf(buf, "%llu\n",
+	return sysfs_emit(buf, "%llu\n",
 			(unsigned long long)(sbi->kbytes_written +
 			((f2fs_get_sectors_written(sbi) -
 				sbi->sectors_written_start) >> 1)));
@@ -125,13 +125,13 @@ static ssize_t lifetime_write_kbytes_show(struct f2fs_attr *a,
 static ssize_t sb_status_show(struct f2fs_attr *a,
 		struct f2fs_sb_info *sbi, char *buf)
 {
-	return sprintf(buf, "%lx\n", sbi->s_flag);
+	return sysfs_emit(buf, "%lx\n", sbi->s_flag);
 }
 
 static ssize_t cp_status_show(struct f2fs_attr *a,
 		struct f2fs_sb_info *sbi, char *buf)
 {
-	return sprintf(buf, "%x\n", le32_to_cpu(F2FS_CKPT(sbi)->ckpt_flags));
+	return sysfs_emit(buf, "%x\n", le32_to_cpu(F2FS_CKPT(sbi)->ckpt_flags));
 }
 
 static ssize_t pending_discard_show(struct f2fs_attr *a,
@@ -139,14 +139,14 @@ static ssize_t pending_discard_show(struct f2fs_attr *a,
 {
 	if (!SM_I(sbi)->dcc_info)
 		return -EINVAL;
-	return sprintf(buf, "%llu\n", (unsigned long long)atomic_read(
+	return sysfs_emit(buf, "%llu\n", (unsigned long long)atomic_read(
 				&SM_I(sbi)->dcc_info->discard_cmd_cnt));
 }
 
 static ssize_t gc_mode_show(struct f2fs_attr *a,
 		struct f2fs_sb_info *sbi, char *buf)
 {
-	return sprintf(buf, "%s\n", gc_mode_names[sbi->gc_mode]);
+	return sysfs_emit(buf, "%s\n", gc_mode_names[sbi->gc_mode]);
 }
 
 static ssize_t features_show(struct f2fs_attr *a,
@@ -205,7 +205,7 @@ static ssize_t features_show(struct f2fs_attr *a,
 static ssize_t current_reserved_blocks_show(struct f2fs_attr *a,
 					struct f2fs_sb_info *sbi, char *buf)
 {
-	return sprintf(buf, "%u\n", sbi->current_reserved_blocks);
+	return sysfs_emit(buf, "%u\n", sbi->current_reserved_blocks);
 }
 
 static ssize_t unusable_show(struct f2fs_attr *a,
@@ -217,7 +217,7 @@ static ssize_t unusable_show(struct f2fs_attr *a,
 		unusable = sbi->unusable_block_count;
 	else
 		unusable = f2fs_get_unusable_blocks(sbi);
-	return sprintf(buf, "%llu\n", (unsigned long long)unusable);
+	return sysfs_emit(buf, "%llu\n", (unsigned long long)unusable);
 }
 
 static ssize_t encoding_show(struct f2fs_attr *a,
@@ -233,13 +233,13 @@ static ssize_t encoding_show(struct f2fs_attr *a,
 			(sb->s_encoding->version >> 8) & 0xff,
 			sb->s_encoding->version & 0xff);
 #endif
-	return sprintf(buf, "(none)\n");
+	return sysfs_emit(buf, "(none)\n");
 }
 
 static ssize_t mounted_time_sec_show(struct f2fs_attr *a,
 		struct f2fs_sb_info *sbi, char *buf)
 {
-	return sprintf(buf, "%llu\n", SIT_I(sbi)->mounted_time);
+	return sysfs_emit(buf, "%llu\n", SIT_I(sbi)->mounted_time);
 }
 
 #ifdef CONFIG_F2FS_STAT_FS
@@ -248,7 +248,7 @@ static ssize_t moved_blocks_foreground_show(struct f2fs_attr *a,
 {
 	struct f2fs_stat_info *si = F2FS_STAT(sbi);
 
-	return sprintf(buf, "%llu\n",
+	return sysfs_emit(buf, "%llu\n",
 		(unsigned long long)(si->tot_blks -
 			(si->bg_data_blks + si->bg_node_blks)));
 }
@@ -258,7 +258,7 @@ static ssize_t moved_blocks_background_show(struct f2fs_attr *a,
 {
 	struct f2fs_stat_info *si = F2FS_STAT(sbi);
 
-	return sprintf(buf, "%llu\n",
+	return sysfs_emit(buf, "%llu\n",
 		(unsigned long long)(si->bg_data_blks + si->bg_node_blks));
 }
 
@@ -269,7 +269,7 @@ static ssize_t avg_vblocks_show(struct f2fs_attr *a,
 
 	si->dirty_count = dirty_segments(sbi);
 	f2fs_update_sit_info(sbi);
-	return sprintf(buf, "%llu\n", (unsigned long long)(si->avg_vblocks));
+	return sysfs_emit(buf, "%llu\n", (unsigned long long)(si->avg_vblocks));
 }
 #endif
 
@@ -313,19 +313,14 @@ static ssize_t f2fs_sbi_show(struct f2fs_attr *a,
 
 	if (!strcmp(a->attr.name, "ckpt_thread_ioprio")) {
 		struct ckpt_req_control *cprc = &sbi->cprc_info;
-		int len = 0;
 		int class = IOPRIO_PRIO_CLASS(cprc->ckpt_thread_ioprio);
 		int data = IOPRIO_PRIO_DATA(cprc->ckpt_thread_ioprio);
 
-		if (class == IOPRIO_CLASS_RT)
-			len += scnprintf(buf + len, PAGE_SIZE - len, "rt,");
-		else if (class == IOPRIO_CLASS_BE)
-			len += scnprintf(buf + len, PAGE_SIZE - len, "be,");
-		else
+		if (class != IOPRIO_CLASS_RT && class != IOPRIO_CLASS_BE)
 			return -EINVAL;
 
-		len += scnprintf(buf + len, PAGE_SIZE - len, "%d\n", data);
-		return len;
+		return sysfs_emit(buf, "%s,%d\n",
+			class == IOPRIO_CLASS_RT ? "rt" : "be", data);
 	}
 
 #ifdef CONFIG_F2FS_FS_COMPRESSION
@@ -372,7 +367,7 @@ static ssize_t f2fs_sbi_show(struct f2fs_attr *a,
 
 	ui = (unsigned int *)(ptr + a->offset);
 
-	return sprintf(buf, "%u\n", *ui);
+	return sysfs_emit(buf, "%u\n", *ui);
 }
 
 static ssize_t __sbi_store(struct f2fs_attr *a,
@@ -461,7 +456,7 @@ out:
 	if (ret < 0)
 		return ret;
 #ifdef CONFIG_F2FS_FAULT_INJECTION
-	if (a->struct_type == FAULT_INFO_TYPE && t >= (1 << FAULT_MAX))
+	if (a->struct_type == FAULT_INFO_TYPE && t >= BIT(FAULT_MAX))
 		return -EINVAL;
 	if (a->struct_type == FAULT_INFO_RATE && t >= UINT_MAX)
 		return -EINVAL;
@@ -479,6 +474,17 @@ out:
 		sbi->current_reserved_blocks = min(sbi->reserved_blocks,
 				sbi->user_block_count - valid_user_blocks(sbi));
 		spin_unlock(&sbi->stat_lock);
+		return count;
+	}
+
+	if (!strcmp(a->attr.name, "discard_io_aware_gran")) {
+		if (t > MAX_PLIST_NUM)
+			return -EINVAL;
+		if (!f2fs_block_unit_discard(sbi))
+			return -EINVAL;
+		if (t == *ui)
+			return count;
+		*ui = t;
 		return count;
 	}
 
@@ -520,7 +526,7 @@ out:
 		} else if (t == 1) {
 			sbi->gc_mode = GC_URGENT_HIGH;
 			if (sbi->gc_thread) {
-				sbi->gc_thread->gc_wake = 1;
+				sbi->gc_thread->gc_wake = true;
 				wake_up_interruptible_all(
 					&sbi->gc_thread->gc_wait_queue_head);
 				wake_up_discard_thread(sbi, true);
@@ -530,7 +536,7 @@ out:
 		} else if (t == 3) {
 			sbi->gc_mode = GC_URGENT_MID;
 			if (sbi->gc_thread) {
-				sbi->gc_thread->gc_wake = 1;
+				sbi->gc_thread->gc_wake = true;
 				wake_up_interruptible_all(
 					&sbi->gc_thread->gc_wait_queue_head);
 			}
@@ -573,9 +579,9 @@ out:
 	if (!strcmp(a->attr.name, "iostat_period_ms")) {
 		if (t < MIN_IOSTAT_PERIOD_MS || t > MAX_IOSTAT_PERIOD_MS)
 			return -EINVAL;
-		spin_lock(&sbi->iostat_lock);
+		spin_lock_irq(&sbi->iostat_lock);
 		sbi->iostat_period_ms = (unsigned int)t;
-		spin_unlock(&sbi->iostat_lock);
+		spin_unlock_irq(&sbi->iostat_lock);
 		return count;
 	}
 #endif
@@ -594,6 +600,20 @@ out:
 		if (t != 0)
 			return -EINVAL;
 		sbi->compr_new_inode = 0;
+		return count;
+	}
+
+	if (!strcmp(a->attr.name, "compress_percent")) {
+		if (t == 0 || t > 100)
+			return -EINVAL;
+		*ui = t;
+		return count;
+	}
+
+	if (!strcmp(a->attr.name, "compress_watermark")) {
+		if (t == 0 || t > 100)
+			return -EINVAL;
+		*ui = t;
 		return count;
 	}
 #endif
@@ -679,11 +699,29 @@ out:
 	}
 
 	if (!strcmp(a->attr.name, "warm_data_age_threshold")) {
-		if (t == 0 || t <= sbi->hot_data_age_threshold)
+		if (t <= sbi->hot_data_age_threshold)
 			return -EINVAL;
 		if (t == *ui)
 			return count;
 		*ui = (unsigned int)t;
+		return count;
+	}
+
+	if (!strcmp(a->attr.name, "last_age_weight")) {
+		if (t > 100)
+			return -EINVAL;
+		if (t == *ui)
+			return count;
+		*ui = (unsigned int)t;
+		return count;
+	}
+
+	if (!strcmp(a->attr.name, "ipu_policy")) {
+		if (t >= BIT(F2FS_IPU_MAX))
+			return -EINVAL;
+		if (t && f2fs_lfs_mode(sbi))
+			return -EINVAL;
+		SM_I(sbi)->ipu_policy = (unsigned int)t;
 		return count;
 	}
 
@@ -759,7 +797,7 @@ static void f2fs_sb_release(struct kobject *kobj)
 static ssize_t f2fs_feature_show(struct f2fs_attr *a,
 		struct f2fs_sb_info *sbi, char *buf)
 {
-	return sprintf(buf, "supported\n");
+	return sysfs_emit(buf, "supported\n");
 }
 
 #define F2FS_FEATURE_RO_ATTR(_name)				\
@@ -772,8 +810,8 @@ static ssize_t f2fs_sb_feature_show(struct f2fs_attr *a,
 		struct f2fs_sb_info *sbi, char *buf)
 {
 	if (F2FS_HAS_FEATURE(sbi, a->id))
-		return sprintf(buf, "supported\n");
-	return sprintf(buf, "unsupported\n");
+		return sysfs_emit(buf, "supported\n");
+	return sysfs_emit(buf, "unsupported\n");
 }
 
 #define F2FS_SB_FEATURE_RO_ATTR(_name, _feat)			\
@@ -826,6 +864,7 @@ F2FS_RW_ATTR(DCC_INFO, discard_cmd_control, max_discard_request, max_discard_req
 F2FS_RW_ATTR(DCC_INFO, discard_cmd_control, min_discard_issue_time, min_discard_issue_time);
 F2FS_RW_ATTR(DCC_INFO, discard_cmd_control, mid_discard_issue_time, mid_discard_issue_time);
 F2FS_RW_ATTR(DCC_INFO, discard_cmd_control, max_discard_issue_time, max_discard_issue_time);
+F2FS_RW_ATTR(DCC_INFO, discard_cmd_control, discard_io_aware_gran, discard_io_aware_gran);
 F2FS_RW_ATTR(DCC_INFO, discard_cmd_control, discard_urgent_util, discard_urgent_util);
 F2FS_RW_ATTR(DCC_INFO, discard_cmd_control, discard_granularity, discard_granularity);
 F2FS_RW_ATTR(DCC_INFO, discard_cmd_control, max_ordered_discard, max_ordered_discard);
@@ -919,6 +958,8 @@ F2FS_FEATURE_RO_ATTR(compression);
 F2FS_RW_ATTR(F2FS_SBI, f2fs_sb_info, compr_written_block, compr_written_block);
 F2FS_RW_ATTR(F2FS_SBI, f2fs_sb_info, compr_saved_block, compr_saved_block);
 F2FS_RW_ATTR(F2FS_SBI, f2fs_sb_info, compr_new_inode, compr_new_inode);
+F2FS_RW_ATTR(F2FS_SBI, f2fs_sb_info, compress_percent, compress_percent);
+F2FS_RW_ATTR(F2FS_SBI, f2fs_sb_info, compress_watermark, compress_watermark);
 #endif
 F2FS_FEATURE_RO_ATTR(pin_file);
 
@@ -942,6 +983,7 @@ F2FS_RW_ATTR(F2FS_SBI, f2fs_sb_info, revoked_atomic_block, revoked_atomic_block)
 /* For block age extent cache */
 F2FS_RW_ATTR(F2FS_SBI, f2fs_sb_info, hot_data_age_threshold, hot_data_age_threshold);
 F2FS_RW_ATTR(F2FS_SBI, f2fs_sb_info, warm_data_age_threshold, warm_data_age_threshold);
+F2FS_RW_ATTR(F2FS_SBI, f2fs_sb_info, last_age_weight, last_age_weight);
 
 #define ATTR_LIST(name) (&f2fs_attr_##name.attr)
 static struct attribute *f2fs_attrs[] = {
@@ -958,6 +1000,7 @@ static struct attribute *f2fs_attrs[] = {
 	ATTR_LIST(min_discard_issue_time),
 	ATTR_LIST(mid_discard_issue_time),
 	ATTR_LIST(max_discard_issue_time),
+	ATTR_LIST(discard_io_aware_gran),
 	ATTR_LIST(discard_urgent_util),
 	ATTR_LIST(discard_granularity),
 	ATTR_LIST(max_ordered_discard),
@@ -1020,6 +1063,8 @@ static struct attribute *f2fs_attrs[] = {
 	ATTR_LIST(compr_written_block),
 	ATTR_LIST(compr_saved_block),
 	ATTR_LIST(compr_new_inode),
+	ATTR_LIST(compress_percent),
+	ATTR_LIST(compress_watermark),
 #endif
 	/* For ATGC */
 	ATTR_LIST(atgc_candidate_ratio),
@@ -1036,6 +1081,7 @@ static struct attribute *f2fs_attrs[] = {
 	ATTR_LIST(revoked_atomic_block),
 	ATTR_LIST(hot_data_age_threshold),
 	ATTR_LIST(warm_data_age_threshold),
+	ATTR_LIST(last_age_weight),
 	NULL,
 };
 
@@ -1406,25 +1452,14 @@ put_sb_kobj:
 
 void f2fs_unregister_sysfs(struct f2fs_sb_info *sbi)
 {
-	if (sbi->s_proc) {
-#ifdef CONFIG_F2FS_IOSTAT
-		remove_proc_entry("iostat_info", sbi->s_proc);
-#endif
-		remove_proc_entry("segment_info", sbi->s_proc);
-		remove_proc_entry("segment_bits", sbi->s_proc);
-		remove_proc_entry("victim_bits", sbi->s_proc);
-		remove_proc_entry("discard_plist_info", sbi->s_proc);
-		remove_proc_entry(sbi->sb->s_id, f2fs_proc_root);
-	}
+	if (sbi->s_proc)
+		remove_proc_subtree(sbi->sb->s_id, f2fs_proc_root);
 
-	kobject_del(&sbi->s_stat_kobj);
 	kobject_put(&sbi->s_stat_kobj);
 	wait_for_completion(&sbi->s_stat_kobj_unregister);
-	kobject_del(&sbi->s_feature_list_kobj);
 	kobject_put(&sbi->s_feature_list_kobj);
 	wait_for_completion(&sbi->s_feature_list_kobj_unregister);
 
-	kobject_del(&sbi->s_kobj);
 	kobject_put(&sbi->s_kobj);
 	wait_for_completion(&sbi->s_kobj_unregister);
 }
