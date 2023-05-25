@@ -288,12 +288,9 @@ sdm660-internal-codec-cdp.dtb \
 endif
 endif
 
-ifeq ($(CONFIG_BUILD_ARM64_DT_OVERLAY),y)
-dtbo-$(CONFIG_ARCH_LAGOON) += gauguin-sm6350-overlay.dtbo
+dtbo-y += gauguin-sm6350-overlay.dtbo
 gauguin-sm6350-overlay.dtbo-base := lagoon.dtb
-else
-dtb-$(CONFIG_ARCH_LAGOON) += gauguin-sm6350.dtb
-endif
+dtb-y += gauguin-sm6350.dtb
 
 always		:= $(dtb-y)
 subdir-y	:= $(dts-dirs)
