@@ -3281,8 +3281,6 @@ void sde_kms_update_pm_qos_irq_request(struct sde_kms *sde_kms,
 		mutex_unlock(&priv->phandle.phandle_lock);
 }
 
-static void sde_kms_irq_affinity_release(struct kref *ref) {}
-
 static void sde_kms_handle_power_event(u32 event_type, void *usr)
 {
 	struct sde_kms *sde_kms = usr;
